@@ -11,6 +11,9 @@ import java.util.Map;
 @Log4j2
 public enum MsgDAO {
     INSTANCE;
+    private  static final String SQL_UPDATE = "update  tbl_msg set opendate = now() where mno = ?";
+
+    private  static final String SQL_SELECT = "select mno, who, whom, content, regdate, opendate from tbl_msg where mno = ?";
 
     private static final String SQL_INSERT = "insert into tbl_msg (who,whom,content) values (?,?,?)";
 
@@ -79,6 +82,44 @@ public enum MsgDAO {
         }.makeAll();
 
         return listMap;
+    }
+
+    public MsgDTO select(Long mno) throws RuntimeException {
+
+        MsgDTO msgDTO=MsgDTO.builder().build();
+
+        new JdbcTemplate() {
+            @Override
+            protected void execute() throws Exception {
+                //update
+                preparedStatement = connection.prepareStatement(SQL_UPDATE);
+                preparedStatement.setLong(1,mno);
+
+                preparedStatement.executeUpdate();
+
+                preparedStatement.close();
+                preparedStatement=null;
+
+                //select
+                preparedStatement=connection.prepareStatement(SQL_SELECT);
+                preparedStatement.setLong(1,mno);
+
+                resultSet=preparedStatement.executeQuery();
+
+                resultSet.next();
+
+                //mno, who, whom, content, regdate
+                //opendate
+
+                msgDTO.setMno(resultSet.getLong(1));
+                msgDTO.setWho(resultSet.getString(2));
+                msgDTO.setWhom(resultSet.getString(3));
+                msgDTO.setContent(resultSet.getString(4));
+                msgDTO.setRegDate(resultSet.getTimestamp(5));
+                msgDTO.setOpenDate(resultSet.getTimestamp(6));
+            }
+        }.makeAll();
+        return msgDTO;
     }
 
 }
